@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8">
+        <title>Heritage</title>
+        <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="../css/header.css">
+        <link rel="stylesheet" type="text/css" href="../css/profile.css">
+        <link rel="stylesheet" type="text/css" href="../css/footer.css">
+        <link rel="stylesheet" type="text/css" href="../css/fonts.css">
+        <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playwrite+AU+SA:wght@100..400&display=swap" rel="stylesheet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+
+        <div class="wrapper">
+            <%- include("../partials/header.ejs") %>
+
+            <h3 class="content-header__center content-header pretty">Мой профиль</h3>
+
+            <% if (orders.length !== 0) { %>
+            <h2 class="content-header-main content-header__center">Мои бронирования</h2>
+            <ol class="ol content-header__center">
+                <% orders.forEach(function(order) { %>
+                    <li class="li">Количество человек: <%= order.peopleCount %>, 
+                                номер столика: <%= order.tableNumber %>, <br>
+                                дата: <%= order.date %>, 
+                                время: <%= order.time %>
+                        <form action="/cancelReservation" method="POST" style="display:inline;">
+                            <input type="hidden" name="tableNumber" value="<%= order.tableNumber %>">
+                            <input type="hidden" name="date" value="<%= order.date %>">
+                            <input type="hidden" name="time" value="<%= order.time %>">
+                            <button type="submit" class="button-cancel">
+                                <img src="../img/cross.png" alt="" class="cancel-icon">
+                            </button>
+                        </form>
+                    </li>
+                    <hr class="hr">
+                <% }); %>
+            </ol>
+            <% }; %>
+
+            <% if (orders.length === 0) { %>
+                <h1 class="no">У Вас нет активных бронирований</h1>
+            <% }; %>
+            <a class="logout button-logout button__position contact__phone-text button__effect" href="/logout">
+                <p class="button__text">Выйти</p>
+            </a>
+        </div>
+        <%- include("../partials/footer.ejs") %>
+
+        <script src="../js/main.js"></script>
+    </body>
+</html>

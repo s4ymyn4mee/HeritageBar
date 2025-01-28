@@ -1,0 +1,99 @@
+.footer {
+    background: #fcfafa;
+}
+
+.information {
+    display: grid;
+    grid-row-gap: 2vh;
+    margin: 0 5% 0 5%;
+}
+
+.information__header {
+    color: orange;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 24px 0px 24px 0px;
+}
+
+.information__text {
+    color: rgba(0,0,0,0.7);
+    line-height: 2em;
+    font-size: 14px;
+}
+
+.restaurant {
+    margin-top: -20px;
+    font-size: 14px;
+}
+
+.icons-wrapper {
+    margin-top: 5vh;
+    display: flex;
+    width: 120px;
+    justify-content: space-between;
+}
+
+.icon {
+    height: 20px;
+    transition: transform 0.5s;
+}
+
+.icon:hover {
+    transform: translateY(-5px);
+}
+
+.contacts__information {
+    text-decoration: none;
+}
+
+.contacts__information:hover {
+    color: black;
+}
+
+.end {
+    border: 1px solid #fcfafa;
+}
+
+.end__text {
+    text-align: center;
+    font-size: 14px;
+}
+
+@media screen and (min-width: 620px) {
+    .information {
+        grid-template-columns: repeat(2, 1fr);
+        grid-column-gap: 20px;
+    }
+}
+
+@media screen and (min-width: 768px) {
+    h1 {
+        font-size: 3.5rem;
+    }
+
+    h2 {
+        font-size: 2rem;
+    }
+
+    h3 {
+        font-size: 1.5rem;
+    }
+
+    p {
+        font-size: 1.1rem;
+    }
+
+    .information {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media screen and (min-width: 980px) {
+    .information {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .section {
+        margin: 0 auto;
+    }
+}

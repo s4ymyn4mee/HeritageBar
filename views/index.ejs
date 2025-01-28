@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8">
+        <title>Heritage</title>
+        <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="../css/header.css">
+        <link rel="stylesheet" type="text/css" href="../css/index.css">
+        <link rel="stylesheet" type="text/css" href="../css/footer.css">
+        <link rel="stylesheet" type="text/css" href="../css/fonts.css">
+        <link href="https://fonts.googleapis.com/css2?family=Prosto+One&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Playwrite+AU+SA:wght@100..400&display=swap" rel="stylesheet">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <%- include("../partials/header.ejs") %>
+
+        <a class="scroll-top" href="#">
+            <img class="arrow" src="img/arrow.png" alt="Стрелка наверх">
+        </a>
+
+        <div class="home-wrapper">
+            <section class="home">
+                <div class="home__text">
+                    <h1 class="pretty">Бар «Наследие»</h1>
+                    <h2 class="subtitle">Кулинарное наследие,<br> сохранившееся<br> сквозь века.</h2>
+                    <a class="button-reservate button__position contact__phone-text button__effect" href="/reservation">
+                        <p class="button__text">Забронировать столик</p>
+                    </a>
+                </div>
+
+                <div class="photo-wrapper">
+                    <img class="home-img img__position" src="img/sadovod.jfif" alt="Коктейль «Садовод»">
+                </div>
+            </section>
+        </div>
+
+        <div class="about-wrapper" id="about">
+            <section class="about">
+                <div class="slider">
+                    <img class="slide" src="img/cocktailss.jpeg" alt="Коктейли">
+                </div>
+
+                <div class="about__text-container">
+                    <h3 class="content-header__center content-header pretty">О нас</h3>
+                    <h2 class="content-header-main content-header__center">От изысканных коктейлей до авторских напитков</h2>
+                    <p class="about__text content-header__center">Мы предлагаем уникальные коктейли, 
+                     вдохновленные азиатскими вкусами, такие как «Мандариновый 
+                     саке-кола» или «Лемонграссовый мохито». Кроме того, у нас есть 
+                     широкий выбор азиатских сортов пива и саке, которые прекрасно 
+                     дополнят ваши блюда.
+                    </p>
+                    <p class="about__text content-header__center more">
+                        Бар «Наследие» — это место, где восточные традиции 
+                        встречаются с современными кулинарными трендами. 
+                        Мы гордимся нашей атмосферой, наполненной теплом 
+                        и дружелюбием, а также безупречным сервисом, который 
+                        делает каждое посещение незабываемым. <br>
+                        Каждое блюдо — это результат любви и уважения 
+                        к культуре, от которой мы черпаем вдохновение. 
+                        Мы уверены, что каждый гость, посетивший наш бар 
+                        хотя бы раз, вернётся снова, чтобы вновь насладиться 
+                        атмосферой гостеприимства и попробовать наши 
+                        уникальные кулинарные шедевры.
+                    </p>
+                    <p class="show-more">Читать больше</p>
+
+                </div>
+            </section>
+        </div>
+
+        <div class="menu" id="menu">
+            <h3 class="content-header content-header__center  pretty">Меню</h3>
+                <h2 class="content-header-main content-header__center">Напитки недели</h2>
+                    <div class="cards-wrapper">
+                        <div class="card">
+                            <img class="card__img" src="img/tropic.jpg" alt="">
+                            <div class="card__text">
+                                <h4 class="card__name">Tropic</h4>
+                                <h4 class="card__category">0.3</h4>
+                                <h4 class="card__price">&#8381;350</h4>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <img class="card__img" src="img/sadovod.png" alt="">
+                            <div class="card__text">
+                                <h4 class="card__name">Садовод</h4>
+                                <h4 class="card__category">0.33</h4>
+                                <h4 class="card__price">&#8381;600</h4>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <img class="card__img" src="img/operation_drink.jfif" alt="">
+                            <div class="card__text">
+                                <h4 class="card__name">Операция пЫть</h4>
+                                <h4 class="card__category">0.33</h4>
+                                <h4 class="card__price">&#8381;600</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="/menu" class="button menu__button contact__phone-text button__effect" type="button" name="button">
+                        <p class="button__text">Больше блюд</p>
+                    </a>
+        </div>
+
+        <section class="contact-wrapper" id="contact">
+            <div class="contact">
+                <div class="contact__text">
+                    <h3 class="content-header content-header__center contact__left pretty">Обратная связь</h3>
+                    <h2 class="contact__header content-header__center contact__left">Свяжитесь с нами</h2>
+                    <p class="about__text content-header__center contact__left">Если Вы столкнулись с какими-то проблемами
+                        просто позвоните нам, и мы решим <br> все быстро. Наша служба поддержки
+                        работает 24/7.</p>
+                </div>
+                <div class="button-wrapper">
+                    <div class="button contact__phone button__effect">
+                        <a href="tel:+79993129750"
+                           class="button__text contact__phone-text">Связаться с нами</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <%- include("../partials/footer.ejs") %>
+
+        <script src="../js/main.js"></script>
+        <script src="../js/index.js"></script>
+    </body>
+</html>

@@ -1,0 +1,99 @@
+html {
+    max-height: 95%;
+}
+
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background-position: top;
+    background-image: url("../img/background.jpg");
+}
+
+.card {
+    padding-bottom: 10px;
+    width: 90%;
+    max-width: 300px;
+    background: white;
+    border-radius: 10px;
+    margin: 170px auto 60px auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+}
+
+.person {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: orange;
+    margin: auto;
+    position: relative;
+    top: -50px;
+    display: flex;
+}
+
+.avatar {
+    margin: auto;
+}
+
+.content-wrapper {
+    width: 85%;
+    margin: -50px auto 0 auto;
+}
+
+.content-header {
+    text-align: center;
+    font-size: 22px;
+}
+
+.form {
+    margin-top: 40px;
+}
+
+.form-header {
+    font-size: 18px;
+    margin-top: 40px;
+    line-height: 0;
+}
+
+.input {
+    width: 100%;
+    border: 0;
+    outline: none;
+    border-bottom: 1px solid black;
+    height: 30px;
+    font-size: 18px;
+}
+
+.login-button {
+    background: orange;
+    height: 40px;
+    border-radius: 20px;
+    width: 100%;
+    outline: none;
+    cursor: pointer;
+    border: 0;
+    display: flex;
+    margin-top: 20px;
+}
+
+.button__text {
+    color: white;
+    margin: auto;
+    line-height: 0;
+    font-size: 18px;
+}
+
+.register {
+    text-decoration: none;
+    color: gray;
+    line-height: 40px;
+    margin-bottom: 100px;
+}
+
+.register:hover {
+    color: black;
+}
+
+.error-message {
+    color: red;
+}
+

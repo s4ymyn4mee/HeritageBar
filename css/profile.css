@@ -1,0 +1,116 @@
+body {
+    margin: 0;
+    background: url("../img/background.jpg");
+}
+
+.content-header__center {
+    text-align: center;
+}
+
+.content-header {
+    margin-top: 120px;
+    color: darkorange;
+    font-weight: 500;
+    font-size: 54px;;
+}
+
+.content-header-main {
+    margin-top: 80px;
+    line-height: 1.5em;
+    color: white;
+}
+
+.ol {
+    margin: 0% 30% 50px 33%;
+    width: 90%;
+    max-width: 450px;
+    background-color: rgba(0, 0, 0, 0.85);
+    border-radius: 10px;
+    padding: 10px 25px 10px 25px;
+}
+
+.pretty {
+    color: darkorange;
+    font-family: "Great Vibes", serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.li {
+    margin: 15px;
+    margin-left: 20px;
+    color: white;
+    text-align: left;
+}
+
+.logout {
+    text-decoration: none;
+    position: absolute;
+    right: 5%;
+    top: 100px;
+    color: white;
+    font-size: 18px;
+}
+
+.button-logout {
+    width: 100px;
+    height: 45px;
+    border-radius: 7px;
+    border: 0;
+    background: darkorange;
+    display: flex;
+    cursor: pointer;
+    transition: transform 0.2s;
+    outline: none;
+    text-align: center;
+    margin-top: 4vh;
+}
+
+.button__text {
+    color: white;
+    margin: auto;
+    font-size: 1.2rem;
+}
+
+.button__effect:active, 
+.scroll-top:active {
+    transform: scale(0.9);
+}
+
+.hr {
+    border: 0;
+    height: 2px;
+    background-color: darkorange;
+}
+
+.wrapper {
+    min-height: 40vh;
+    margin-bottom: 70px;
+}
+
+.no {
+    margin: auto;
+    width: 90%;
+    text-align: center;
+    color: gray;
+}
+
+.button-cancel {
+    display: inline-block;
+    margin-left: 20px;
+    padding: 5px 5px;
+    background-color: orange;
+    color: white;
+    text-decoration: none;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.button-cancel:hover {
+    background-color: darkorange;
+}
+
+.cancel-icon {
+    width: 20px;
+    height: 20px;
+}

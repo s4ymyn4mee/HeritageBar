@@ -1,0 +1,175 @@
+body {
+    margin: 0;
+    background-image: url("../img/background.jpg");
+}
+
+.content-header__center {
+    text-align: center;
+}
+
+.content-header {
+    color: orange;
+    font-weight: 500;
+    font-size: 54px;
+}
+
+.content-header-main {
+    line-height: 1.5em;
+    color: white;
+}
+
+.pretty {
+    color: darkorange;
+    font-family: "Great Vibes", serif;
+    font-weight: 400;
+    font-style: normal;
+}
+
+.order {
+    margin: 0 auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 100%;
+}
+
+.orders {
+    text-decoration: none;
+    color: black;
+}
+
+.reservation {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    margin: 90px 5% 90px 5%;
+}
+
+.funcs {
+    display: flex;
+    justify-content: flex-start;
+    margin: 10px 5% 0 5%;
+    line-height: 0;
+}
+
+.funcs__text {
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.funcs__error {
+    margin-left: 44.4px;
+    font-weight: 400;
+}
+
+.funcs__text:nth-child(1) {
+    margin-right: 20px;
+    color: orange;
+}
+
+.hr {
+    margin: 20px 5% 20px 5%;
+    background-color: orange;
+    height: 2px;
+    border: 0;
+}
+
+.settings {
+    margin: 0 5% 20px 5%;
+    display: grid;
+}
+
+.buttons__wrapper {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-bottom: 0;
+    overflow: hidden;
+    border-radius: 7px 7px 0 0;
+}
+
+.settings__button {
+    padding: 15px 0;
+    background: white;
+    cursor: pointer;
+    width: 100%;
+    border: 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+    font-size: 1.1rem;
+    text-align: center;
+    outline: none;
+}
+
+.settings__button:nth-child(3), .settings__button:hover {
+    border-bottom: 0;
+}
+
+.settings__button:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.reservation__button {
+    width: 100%;
+    border-radius: 0 0 7px 7px;
+    border: 0;
+    font-size: 16px;
+    background: orange;
+    color: white;
+}
+
+.select {
+    width: 100%;
+    height: 100%;
+}
+
+.error-message {
+    color: red;
+}
+
+@media screen and (min-width: 410px) {
+    .buttons__wrapper {
+        flex-direction: row;
+    }
+    .settings__button {
+        border-bottom: 0;
+        border-right: 1px solid rgba(0, 0, 0, 0.3);
+    }
+
+    .settings__button:nth-child(3), .settings__button:hover {
+        border-right: 0;
+    }
+}
+
+@media screen and (min-width: 768px) {
+    .settings {
+        grid-template-columns: 1fr 0.4fr;
+    }
+
+    .reservation__button {
+        border-bottom-left-radius: 0;
+        border-top-right-radius: 7px;
+        height: 100%;
+    }
+
+    .buttons__wrapper {
+        border: 1px solid rgba(0, 0, 0, 0.3);
+        border-right: 0;
+        border-bottom-left-radius: 7px;
+        border-top-right-radius: 0;
+    }
+}
+
+@media screen and (min-width: 980px) {
+    .order {
+        width: 80%;
+    }
+}
+
+@media screen and (min-width: 1360px) {
+    .order {
+        width: 70%;
+    }
+}

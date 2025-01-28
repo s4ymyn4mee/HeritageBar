@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8">
+        <title>Авторизация</title>
+        <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+        <link rel="stylesheet" type="text/css" href="../css/login.css">
+        <link rel="stylesheet" type="text/css" href="../css/header.css">
+        <link rel="stylesheet" type="text/css" href="../css/fonts.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <%- include("../partials/header.ejs") %>
+
+        <div class="card">
+            <div class="person">
+                <img class="avatar" src="img/avatar.png" alt="">
+            </div>
+            <div class="content-wrapper">
+                <h3 class="content-header">Авторизуйтесь</h3>
+                <form class="form" action="/login" method="POST">
+                    <h4 class="form-header">Электронный адрес</h4>
+                    <input class="input" placeholder="Введите адрес" type="email" name="email"
+                            required>
+                    <p class="error-message"><%=errorEmail%></p>
+                    <h4 class="form-header">Пароль</h4>
+                    <input class="input" placeholder="Введите пароль" type="password" id='password' name="password"
+                            required autocomplete="current-password" minlength="8">
+                    <p class="error-message"><%=errorPassword%></p>
+                    <button class="login-button" type="submit" name="button">
+                        <p class="button__text">Войти</p>
+                    </button>
+                </form>
+                <a href="/register" class="register">Зарегистрироваться</a>
+            </div>
+        </div>
+        <script src="../js/main.js"></script>
+    </body>
+</html>
