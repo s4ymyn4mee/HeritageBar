@@ -14,44 +14,45 @@
     <body>
         <%- include("../partials/header.ejs") %>
 
-            <div class="reservation" id="order">
-                <h3 class="content-header__center content-header pretty">Бронирование столика</h3>
-                <h2 class="content-header-main content-header__center">Забронировать столик</h2>
-                <div class="order">
-                    <div class="funcs">
-                        <p class="funcs__text">Поиск столика</p>
-                        <a class="funcs__text orders" href="/profile"><p>Мои заказы</p></a>
-                    </div>
-                    <hr class="hr">
-                    <form class="settings" action="/reservation" method="POST">
-                        <div class="buttons__wrapper">
-
-                            <select class="settings__button" name="peopleCount">
-                                <option class="option" value="1">1 человек</option>
-                                <option value="2">2 человека</option>
-                                <option value="3">3 человека</option>
-                                <option value="4">4 человека</option>
-                                <option value="5">5 человек</option>
-                            </select>
-
-                            <select class="settings__button" name="tableNumber">
-                                <option class="option" value="1">1-й столик</option>
-                                <% for (let i = 2; i <= 10; ++i) { %>
-                                <option value="<%=i%>"><%=i%>-й столик</option>
-                                <% };%>
-                            </select>
-
-                            <input class="settings__button" name="date" type="date" min="<%= currentDate %>" required>
-                            <input class="settings__button" name="time" type="time" min="18:00" max="06:00" value="18:00" required>
-
-                        </div>
-                        <button class="button reservation__button" type="submit" name="button">
-                            <p class="button__text">Забронировать</p>
-                        </button>
-                    </form>
-                    <p class="error-message funcs__error"><%=errorReservation%></p>
+        <div class="reservation" id="order">
+            <h3 class="content-header__center content-header pretty">Бронирование столика</h3>
+            <h2 class="content-header-main content-header__center">Забронировать столик</h2>
+            <div class="order">
+                <div class="funcs">
+                    <p class="funcs__text">Поиск столика</p>
+                    <a class="funcs__text orders" href="/profile"><p>Мои заказы</p></a>
                 </div>
+                <hr class="hr">
+                <form class="settings" action="/reservation" method="POST">
+                    <div class="buttons__wrapper">
+
+                        <select class="settings__button" name="peopleCount">
+                            <option class="option" value="1">1 человек</option>
+                            <% for (let i = 2; i <= 4; ++i) { %>
+                            <option value="<%= i %>"><%= i %> человека</option>
+                            <% };%>
+                            <% for (let i = 5; i <= peopleAmount; ++i) { %>
+                            <option value="<%= i %>"><%= i %> человек</option>
+                            <% };%>
+                        </select>
+
+                        <select class="settings__button" name="tableNumber">
+                            <option class="option" value="1">1-й столик</option>
+                            <% for (let i = 2; i <= tableAmount; ++i) { %>
+                            <option value="<%= i %>"><%= i %>-й столик</option>
+                            <% };%>
+                        </select>
+
+                        <input class="settings__button" name="date" type="date" min="<%= currentDate %>" value="<%= currentDate %>" required>
+                        <input class="settings__button" name="time" type="time" min="18:00" max="05:59" value="18:00" required>
+                    </div>
+                    <button class="button reservation__button" type="submit" name="button">
+                        <p class="button__text">Забронировать</p>
+                    </button>
+                </form>
+                <p class="error-message funcs__error"><%=errorReservation%></p>
             </div>
+        </div>
 
 
         <%- include("../partials/footer.ejs") %>

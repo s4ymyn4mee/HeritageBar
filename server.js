@@ -5,6 +5,8 @@ const helmet = require("helmet");
 const session = require("express-session");
 const app = express();
 const PORT = 3000;
+const PEOPLE_AMOUNT = 5;
+const TABLE_AMOUNT = 10;
 
 app.set("view-engine", "ejs");
 // настроил Content Security Policy (CSP) с помощью Helmet для защиты от XSS и других атак
@@ -96,13 +98,16 @@ app.get("/menu", (req, res) => {
 
 app.get("/reservation", (req, res) => {
   const formattedDate = new Date().toISOString().split('T')[0]; // Формат YYYY-MM-DD
-  const reservationExistMessage = req.session.reservationExist || "";
+  const reservationErrorMessage = req.session.reservationErrorMessage || "";
 
-  req.session.reservationExist = "";
+  req.session.reservationErrorMessage = "";
 
   if (req.session.username) {
-    res.render("reservation.ejs", { currentDate: formattedDate,
-      errorReservation: reservationExistMessage
+    res.render("reservation.ejs", { 
+      currentDate: formattedDate,
+      errorReservation: reservationErrorMessage,
+      peopleAmount: PEOPLE_AMOUNT,
+      tableAmount: TABLE_AMOUNT
      });
   }
   else { res.redirect("/login"); }
@@ -110,6 +115,34 @@ app.get("/reservation", (req, res) => {
 
 app.post("/reservation", async (req, res) => {
   const {peopleCount, tableNumber, date, time} = req.body;
+
+  if (peopleCount <= 0 || peopleCount > PEOPLE_AMOUNT) {
+    req.session.reservationErrorMessage = "Некорректное число человек";
+
+    return res.redirect("/reservation");
+  }
+
+  if (tableNumber <= 0 || tableNumber > TABLE_AMOUNT) {
+    req.session.reservationErrorMessage = "Некорректный номер столика";
+
+    return res.redirect("/reservation");
+  }
+
+  const datePattern = /^20[0-9]{2}-[0-9]{2}-[0-9]{2}$/;
+  if (!datePattern.test(date) || (new Date(date) < new Date().setHours(18, 0, 0, 0))) {
+    req.session.reservationErrorMessage = "Некорректная дата бронирования";
+
+    return res.redirect("/reservation");
+  }
+
+  const timePattern = /^[0-9]{2}:[0-9]{2}$/;
+  const hours       = parseInt(time.split(":")[0]);
+  const minutes     = parseInt(time.split(":")[1]);
+  if (!timePattern.test(time) || (hours < 18 && hours >= 6) || minutes < 0 || minutes > 59) {
+    req.session.reservationErrorMessage = "Некорректное время бронирования";
+
+    return res.redirect("/reservation");
+  }
 
   try {
     const reservationCheck = await client.query(
@@ -121,7 +154,7 @@ app.post("/reservation", async (req, res) => {
     );
 
     if (reservationCheck.rows.length > 0) {
-      req.session.reservationExist = "Столик уже занят!";
+      req.session.reservationErrorMessage = "Столик уже занят";
 
       return res.redirect("/reservation");
     }
@@ -147,7 +180,7 @@ app.post("/reservation", async (req, res) => {
       peopleCount
     ]);
 
-    req.session.reservationExist = "";
+    req.session.reservationErrorMessage = "";
 
     return res.redirect("/profile");
   } catch (error) {
@@ -157,11 +190,11 @@ app.post("/reservation", async (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const errorEmailMessage = req.session.emailNotExistMessage || "";
-  const errorPasswordMessage = req.session.incorrectPassword || "";
+  const errorEmailMessage = req.session.emailErrorMessage || "";
+  const errorPasswordMessage = req.session.passwordErrorMessage || "";
 
-  req.session.emailNotExistMessage = "";
-  req.session.incorrectPassword = "";
+  req.session.emailErrorMessage = "";
+  req.session.passwordErrorMessage = "";
 
   res.render("login.ejs", {
     errorEmail: errorEmailMessage,
@@ -172,6 +205,20 @@ app.get("/login", (req, res) => {
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
+  const emailPattern = /^[a-zA-Z0-9._%+-]{1,50}@[a-zA-Z0-9.-]{1,50}.[a-zA-Z]{2,}$/;
+  if (!emailPattern.test(email)) {
+    req.session.emailErrorMessage = "Некорректный email";
+
+    return res.redirect("/login");
+  }
+
+  const passwordPattern = /^[^\s]{8,50}$/;
+  if (!passwordPattern.test(password)) {
+    req.session.passwordErrorMessage = "Неверный пароль";
+
+    return res.redirect("/login");
+  }
+
   try {
     const userResult = await client.query(
       `SELECT * FROM ganiev.users WHERE email = $1`,
@@ -180,7 +227,7 @@ app.post("/login", async (req, res) => {
 
     const user = userResult.rows[0];
     if (!user) {
-      req.session.emailNotExistMessage = "Несуществующий email";
+      req.session.emailErrorMessage = "Несуществующий email";
 
       return res.redirect("/login");
     }
@@ -192,7 +239,7 @@ app.post("/login", async (req, res) => {
 
       return res.redirect("/profile");
     } else {
-      req.session.incorrectPassword = "Неверный пароль";
+      req.session.passwordErrorMessage = "Неверный пароль";
 
       return res.redirect("/login");
     }
@@ -203,17 +250,44 @@ app.post("/login", async (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const errorEmailMessage = req.session.emailExistMessage || "";
+  const errorEmailMessage = req.session.emailErrorMessage || "";
+  const errorUsernameMessage = req.session.usernameErrorMessage || "";
+  const errorPasswordMessage = req.session.passwordErrorMessage || "";
 
-  req.session.emailExistMessage = "";
+  req.session.emailErrorMessage = "";
+  req.session.usernameErrorMessage = "";
+  req.session.passwordErrorMessage = "";
 
   res.render("register.ejs", {
+    errorUsername: errorUsernameMessage,
     errorEmail: errorEmailMessage,
+    errorPassword: errorPasswordMessage
   });
 });
 
 app.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
+
+  const usernamePattern = /^[a-zA-Zа-яА-Я\s]{2,50}$/;
+  if (!usernamePattern.test(username)) {
+    req.session.usernameErrorMessage = "Допускается только латиница, кириллица и пробел";
+
+    return res.redirect("/register");
+  }
+
+  const emailPattern = /^[a-zA-Z0-9._%+-]{1,50}@[a-zA-Z0-9.-]{1,50}.[a-zA-Z]{2,}$/;
+  if (!emailPattern.test(email)) {
+    req.session.emailErrorMessage = "Некорректный email";
+
+    return res.redirect("/register");
+  }
+
+  const passwordPattern = /^[^\s]{8,50}$/;
+  if (!passwordPattern.test(password)) {
+    req.session.passwordErrorMessage = "Пароль должен иметь длину от 8 до 50 символов";
+
+    return res.redirect("/register");
+  }
 
   try {
     const emailCheck = await client.query(
@@ -222,7 +296,8 @@ app.post("/register", async (req, res) => {
     );
 
     if (emailCheck.rows.length > 0) {
-      req.session.emailExistMessage = "Существующий email";
+      req.session.emailErrorMessage = "Существующий email";
+
       return res.redirect("/register");
     }
 
@@ -236,7 +311,7 @@ app.post("/register", async (req, res) => {
       password,
     ]);
 
-    req.session.emailExistMessage = "";
+    req.session.emailErrorMessage = "";
     res.redirect("/login");
   } catch (error) {
     console.error("Ошибка регистрации:\n", error);

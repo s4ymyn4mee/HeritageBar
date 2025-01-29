@@ -20,18 +20,21 @@
                 <h3 class="content-header">Авторизуйтесь</h3>
                 <form class="form" action="/login" method="POST">
                     <h4 class="form-header">Электронный адрес</h4>
-                    <input class="input" placeholder="Введите адрес" type="email" name="email"
-                            required>
+                    <input class="input" placeholder="Введите адрес" type="email"
+                        name="email" maxlength="50" required>
                     <p class="error-message"><%=errorEmail%></p>
+
                     <h4 class="form-header">Пароль</h4>
-                    <input class="input" placeholder="Введите пароль" type="password" id='password' name="password"
-                            required autocomplete="current-password" minlength="8">
+                    <input class="input" placeholder="Введите пароль" type="password"
+                        id='password' name="password" autocomplete="current-password"
+                        minlength="8" maxlength="50" required>
                     <p class="error-message"><%=errorPassword%></p>
+
                     <button class="login-button" type="submit" name="button">
                         <p class="button__text">Войти</p>
                     </button>
                 </form>
-                <a href="/register" class="register">Зарегистрироваться</a>
+                <a href="/register" class="alternative__button">Зарегистрироваться</a>
             </div>
         </div>
         <script src="../js/main.js"></script>

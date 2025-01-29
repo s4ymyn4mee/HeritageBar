@@ -20,19 +20,27 @@
                 <h3 class="content-header">Зарегистрируйтесь</h3>
                 <form class="form" action="/register" method="POST">
                     <h4 class="form-header">Имя</h4>
-                    <input class="input" placeholder="Введите имя" type="text" id="username" name="username"
-                            required maxlength="50">
+                    <input class="input" placeholder="Введите имя" type="text" 
+                            id="username" name="username" autocomplete="off" 
+                            minlength="2" maxlength="50" required>
+                    <p class="error-message"><%=errorUsername%></p>
+
                     <h4 class="form-header">Электронный адрес</h4>
-                    <input class="input" placeholder="Введите адрес" type="email" id="email" name="email"
-                            required maxlength="50">
+                    <input class="input" placeholder="Введите адрес" type="email" 
+                            id="email" name="email" maxlength="50" required>
                     <p class="error-message"><%=errorEmail%></p>
+
                     <h4 class="form-header">Пароль</h4>
-                    <input class="input" placeholder="Введите пароль" type="password" id="password" name="password"
-                            required autocomplete="new-password" minlength="8" maxlength="50">
+                    <input class="input" placeholder="Введите пароль" type="password"
+                            id="password" name="password" autocomplete="new-password" 
+                            minlength="8" maxlength="50" required>
+                    <p class="error-message"><%=errorPassword%></p>
+
                     <button class="login-button" type="submit" name="button">
                         <p class="button__text">Зарегистрироваться</p>
                     </button>
                 </form>
+                <a href="/login" class="alternative__button">Уже есть аккаунт?</a>
             </div>
         </div>
         <script src="../js/main.js"></script>

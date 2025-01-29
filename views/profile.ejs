@@ -12,9 +12,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
+        <%- include("../partials/header.ejs") %>
 
         <div class="wrapper">
-            <%- include("../partials/header.ejs") %>
 
             <h3 class="content-header__center content-header pretty">Мой профиль</h3>
 
@@ -30,8 +30,8 @@
                             <input type="hidden" name="tableNumber" value="<%= order.tableNumber %>">
                             <input type="hidden" name="date" value="<%= order.date %>">
                             <input type="hidden" name="time" value="<%= order.time %>">
-                            <button type="submit" class="button-cancel">
-                                <img src="../img/cross.png" alt="" class="cancel-icon">
+                            <button type="submit" class="button-cancel button__effect">
+                                <img src="../img/cross.png" class="cancel-icon" alt="Отменить">
                             </button>
                         </form>
                     </li>

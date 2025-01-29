@@ -82,14 +82,14 @@ body {
     font-size: 18px;
 }
 
-.register {
+.alternative__button {
     text-decoration: none;
     color: gray;
     line-height: 40px;
     margin-bottom: 100px;
 }
 
-.register:hover {
+.alternative__button:hover {
     color: black;
 }
 
