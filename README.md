@@ -1,4 +1,4 @@
-![Heritage Bar](/img/logo_negate.png)
+![Heritage Bar](/public/img/logo_negate.png)
 # Сайт бара "Наследие"
 
 ## Таски:
