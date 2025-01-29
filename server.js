@@ -1,14 +1,17 @@
 const express = require("express");
-const { Client } = require("pg");
+const { Pool } = require("pg");
 const dbConfig = require('./dbConfig');
 const helmet = require("helmet"); 
 const session = require("express-session");
+const PgSession = require("connect-pg-simple")(session);
+const bcrypt = require("bcrypt");
 const app = express();
+const path = require("path");
 const PORT = 3000;
 const PEOPLE_AMOUNT = 5;
 const TABLE_AMOUNT = 10;
 
-app.set("view-engine", "ejs");
+app.set("view engine", "ejs");
 // настроил Content Security Policy (CSP) с помощью Helmet для защиты от XSS и других атак
 app.use(
   helmet.contentSecurityPolicy({
@@ -24,20 +27,30 @@ app.use(
     },
   })
 );
-app.use(express.static(`${__dirname}`));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: false }));
+
+const pool = new Pool(dbConfig);
+
 app.use(
   session({
+    store: new PgSession({
+      pool: pool,
+      tableName: 'session'
+    }),
     secret: "mySecret",
-    resave: true,
+    resave: false,
     saveUninitialized: false,
-    cookie: { maxAge: 3600000 },
+    cookie: {
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 дней
+      secure: false, // true, если HTTPS, иначе false
+      httpOnly: true,
+      sameSite: 'lax'
+    },
   })
 );
 
-const client = new Client(dbConfig);
-
-client
+pool
   .connect()
   .then(() => console.log("Connected to PostgreSQL successfully"))
   .catch((err) => console.error("Connection error", err.stack));
@@ -58,7 +71,7 @@ app.get("/profile", async (req, res) => {
   }
 
   try {
-    const userResult = await client.query(
+    const userResult = await pool.query(
       `SELECT
         people_count,
         table_id, 
@@ -70,19 +83,17 @@ app.get("/profile", async (req, res) => {
       [req.session.userId]
     );
 
-    if (typeof userResult.rows === 'undefined') {
+    if (!userResult.rows) {
       return res.redirect("/login");
     }
 
-    const allUserReservations = [];
-    for (let i = 0; i < userResult.rows.length; ++i) {
-      const peopleCount = userResult.rows[i].people_count;
-      const tableNumber = userResult.rows[i].table_id;
-      const date        = userResult.rows[i].formatted_date;
-      const time        = userResult.rows[i].formatted_time;
+    const allUserReservations = userResult.rows.map(row => ({
+      peopleCount: row.people_count,
+      tableNumber: row.table_id,
+      date: row.formatted_date,
+      time: row.formatted_time
+    }));
 
-      allUserReservations.push({peopleCount, tableNumber, date, time});
-    }
     orders.set(req.session.email, allUserReservations);
 
     res.render("profile.ejs", { orders: orders.get(req.session.email) });
@@ -97,7 +108,15 @@ app.get("/menu", (req, res) => {
 });
 
 app.get("/reservation", (req, res) => {
-  const formattedDate = new Date().toISOString().split('T')[0]; // Формат YYYY-MM-DD
+  const options = {
+    timeZone: 'Asia/Yekaterinburg',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  };
+
+  // Формат YYYY-MM-DD
+  const formattedDate = new Intl.DateTimeFormat('en-CA', options).format(new Date()); 
   const reservationErrorMessage = req.session.reservationErrorMessage || "";
 
   req.session.reservationErrorMessage = "";
@@ -118,34 +137,45 @@ app.post("/reservation", async (req, res) => {
 
   if (peopleCount <= 0 || peopleCount > PEOPLE_AMOUNT) {
     req.session.reservationErrorMessage = "Некорректное число человек";
-
     return res.redirect("/reservation");
   }
 
   if (tableNumber <= 0 || tableNumber > TABLE_AMOUNT) {
     req.session.reservationErrorMessage = "Некорректный номер столика";
+    return res.redirect("/reservation");
+  }
+
+  const datePattern = /^20\d{2}-\d{2}-\d{2}$/; // YYYY-MM-DD
+  if (!datePattern.test(date)) {
+    req.session.reservationErrorMessage = "Некорректный формат даты бронирования";
 
     return res.redirect("/reservation");
   }
 
-  const datePattern = /^20[0-9]{2}-[0-9]{2}-[0-9]{2}$/;
-  if (!datePattern.test(date) || (new Date(date) < new Date().setHours(18, 0, 0, 0))) {
-    req.session.reservationErrorMessage = "Некорректная дата бронирования";
+  const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM (00:00 - 23:59)
+  if (!timePattern.test(time)) {
+    req.session.reservationErrorMessage = "Некорректный формат времени бронирования";
 
     return res.redirect("/reservation");
   }
 
-  const timePattern = /^[0-9]{2}:[0-9]{2}$/;
-  const hours       = parseInt(time.split(":")[0]);
-  const minutes     = parseInt(time.split(":")[1]);
-  if (!timePattern.test(time) || (hours < 18 && hours >= 6) || minutes < 0 || minutes > 59) {
-    req.session.reservationErrorMessage = "Некорректное время бронирования";
+  const bookingDateTime = new Date(`${date}T${time}:00`);
+  const now = new Date();
+  if (bookingDateTime <= now) {
+    req.session.reservationErrorMessage = "Дата и время бронирования уже прошли";
+
+    return res.redirect("/reservation");
+  }
+
+  const reservationHour = bookingDateTime.getHours();
+  if (!(reservationHour >= 18 && reservationHour <= 23 || reservationHour >= 0 && reservationHour < 6)) {
+    req.session.reservationErrorMessage = "Бронирование возможно только с 18:00 до 05:59";
 
     return res.redirect("/reservation");
   }
 
   try {
-    const reservationCheck = await client.query(
+    const reservationCheck = await pool.query(
       `SELECT * FROM ganiev.reserved_tables 
       WHERE table_id = $1
       AND   date = $2
@@ -170,7 +200,7 @@ app.post("/reservation", async (req, res) => {
       ) 
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING user_id
     `;
-    const result = await client.query(insertReservationQuery, [
+    await pool.query(insertReservationQuery, [
       req.session.userId,
       tableNumber,
       req.session.username,
@@ -220,7 +250,7 @@ app.post("/login", async (req, res) => {
   }
 
   try {
-    const userResult = await client.query(
+    const userResult = await pool.query(
       `SELECT * FROM ganiev.users WHERE email = $1`,
       [email]
     );
@@ -232,7 +262,8 @@ app.post("/login", async (req, res) => {
       return res.redirect("/login");
     }
 
-    if (password === user.password) {
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (passwordMatch) {
       req.session.userId = user.user_id;
       req.session.username = user.username;
       req.session.email = user.email;
@@ -290,25 +321,27 @@ app.post("/register", async (req, res) => {
   }
 
   try {
-    const emailCheck = await client.query(
+    const emailCheck = await pool.query(
       `SELECT * FROM ganiev.users WHERE email = $1`,
       [email]
     );
 
     if (emailCheck.rows.length > 0) {
-      req.session.emailErrorMessage = "Существующий email";
+      req.session.emailErrorMessage = "Такой адрес уже занят";
 
       return res.redirect("/register");
     }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const insertUserQuery = `
       INSERT INTO ganiev.users (username, email, password) 
       VALUES ($1, $2, $3) RETURNING user_id
     `;
-    const result = await client.query(insertUserQuery, [
+    await pool.query(insertUserQuery, [
       username,
       email,
-      password,
+      hashedPassword,
     ]);
 
     req.session.emailErrorMessage = "";
@@ -319,24 +352,15 @@ app.post("/register", async (req, res) => {
   }
 });
 
-app.get("/logout", (req, res) => {
-  req.session.destroy();
-  res.redirect("/profile");
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-
 app.post("/cancelReservation", async (req, res) => {
   const { tableNumber, date, time } = req.body;
 
   try {
-    await client.query(
+    await pool.query(
       `DELETE FROM ganiev.reserved_tables 
       WHERE table_id = $1 
-        AND date = $2 
-        AND time = $3`,
+      AND   date = $2 
+      AND   time = $3`,
       [tableNumber, date, time]
     );
 
@@ -345,4 +369,19 @@ app.post("/cancelReservation", async (req, res) => {
     console.error("Ошибка отмены столика:\n", error);
     res.sendStatus(500);
   }
+});
+
+app.get("/logout", (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      console.error("Ошибка при выходе из системы:", err);
+      return res.sendStatus(500);
+    }
+    res.clearCookie('connect.sid'); // Удаление куки сессии
+    res.redirect("/login");
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
