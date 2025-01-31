@@ -18,7 +18,11 @@
             </div>
             <div class="content-wrapper">
                 <h3 class="content-header">Зарегистрируйтесь</h3>
+
                 <form class="form" action="/register" method="POST">
+                    <% if (bEmailConfirmMessage) { %> 
+                        <div class="confirm-message">На ваш адрес электронной почты отправлено письмо для подтверждения</div>
+                    <% }; %>
                     <h4 class="form-header">Имя</h4>
                     <input class="input" placeholder="Введите имя" type="text" 
                             id="username" name="username" autocomplete="off" 
@@ -40,7 +44,7 @@
                         <p class="button__text">Зарегистрироваться</p>
                     </button>
                 </form>
-                <a href="/login" class="alternative__button">Уже есть аккаунт?</a>
+                <a href="/login" class="alternative__button">Авторизоваться</a>
             </div>
         </div>
         <script src="../js/main.js"></script>

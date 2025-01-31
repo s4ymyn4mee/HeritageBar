@@ -45,7 +45,7 @@ body {
 }
 
 .form {
-    margin-top: 40px;
+    margin-top: 20px;
 }
 
 .form-header {
@@ -97,3 +97,13 @@ body {
     color: red;
 }
 
+.confirm-message {
+    margin: auto;
+    padding: 5px;
+    color: green;
+    background-color: rgb(4, 250, 98);
+    border-width: 1px;
+    border-radius: 5px;
+    border-color: green;
+    border-style: solid;
+}

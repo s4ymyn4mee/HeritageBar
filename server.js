@@ -1,15 +1,35 @@
+require('dotenv').config();
+const dbConfig = {
+  user:     process.env.DB_USER,
+  host:     process.env.DB_HOST,
+  database: process.env.DATABASE,
+  password: process.env.DB_PASS,
+  port:     process.env.DB_PORT,
+}
+const PORT = process.env.PORT || 3000;  
+
 const express = require("express");
 const { Pool } = require("pg");
-const dbConfig = require('./dbConfig');
+const path = require("path");
 const helmet = require("helmet"); 
 const session = require("express-session");
+const crypto = require("crypto");
 const PgSession = require("connect-pg-simple")(session);
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
 const app = express();
-const path = require("path");
-const PORT = 3000;
 const PEOPLE_AMOUNT = 5;
 const TABLE_AMOUNT = 10;
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.mail.ru",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
 
 app.set("view engine", "ejs");
 // настроил Content Security Policy (CSP) с помощью Helmet для защиты от XSS и других атак
@@ -262,6 +282,12 @@ app.post("/login", async (req, res) => {
       return res.redirect("/login");
     }
 
+    if (!user.is_verified) {
+      req.session.emailErrorMessage = "Пожалуйста, подтвердите свою электронную почту перед входом";
+
+      return res.redirect("/login");
+    }
+
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (passwordMatch) {
       req.session.userId = user.user_id;
@@ -284,15 +310,18 @@ app.get("/register", (req, res) => {
   const errorEmailMessage = req.session.emailErrorMessage || "";
   const errorUsernameMessage = req.session.usernameErrorMessage || "";
   const errorPasswordMessage = req.session.passwordErrorMessage || "";
+  const bEmailConfirmMessage = req.session.bEmailConfirmMessage || false;
 
   req.session.emailErrorMessage = "";
   req.session.usernameErrorMessage = "";
   req.session.passwordErrorMessage = "";
+  req.session.bEmailConfirmMessage = false;
 
   res.render("register.ejs", {
     errorUsername: errorUsernameMessage,
     errorEmail: errorEmailMessage,
-    errorPassword: errorPasswordMessage
+    errorPassword: errorPasswordMessage,
+    bEmailConfirmMessage: bEmailConfirmMessage
   });
 });
 
@@ -326,28 +355,101 @@ app.post("/register", async (req, res) => {
       [email]
     );
 
+    let insertUserQuery = `
+      INSERT INTO ganiev.users (username, email, password, verification_token, verification_token_expires) 
+      VALUES ($1, $2, $3, $4, $5) RETURNING user_id
+    `;
     if (emailCheck.rows.length > 0) {
-      req.session.emailErrorMessage = "Такой адрес уже занят";
-
-      return res.redirect("/register");
+      const existingUser = emailCheck.rows[0];
+      if (existingUser.is_verified) {
+        req.session.emailErrorMessage = "Этот email уже зарегистрирован, авторизуйтесь.";
+ 
+        return res.redirect("/register");
+      } else {
+        insertUserQuery = `
+          UPDATE ganiev.users SET 
+          username = $1,
+          password = $3,
+          verification_token = $4, 
+          verification_token_expires = $5
+          WHERE email = $2
+        `;
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const tokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 час, чтобы подтвердить
 
-    const insertUserQuery = `
-      INSERT INTO ganiev.users (username, email, password) 
-      VALUES ($1, $2, $3) RETURNING user_id
-    `;
+    const verificationLink = 
+    `http://localhost:${PORT}/verify-email?token=${verificationToken}&email=${email}`;
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Подтверждение электронной почты',
+      html: `
+        <h2>Привет, ${username}!</h2>
+        <p>Спасибо за регистрацию на сайте Heritage Bar. Пожалуйста, подтвердите свою электронную почту, перейдя по ссылке ниже:</p>
+        <a href="${verificationLink}">Подтвердить Email</a>
+        <p>Если вы не регистрировались, проигнорируйте это письмо.</p>
+      `
+    };
+    await transporter.sendMail(mailOptions);
+
     await pool.query(insertUserQuery, [
       username,
       email,
       hashedPassword,
+      verificationToken,
+      tokenExpires
     ]);
 
     req.session.emailErrorMessage = "";
-    res.redirect("/login");
+    req.session.bEmailConfirmMessage = true;
+    res.redirect("/register");
   } catch (error) {
     console.error("Ошибка регистрации:\n", error);
+    res.sendStatus(500);
+  }
+});
+
+app.get("/verify-email", async (req, res) => {
+  const { token, email } = req.query;
+
+  if (!token || !email) {
+    return res.status(400).send("Некорректная ссылка подтверждения.");
+  }
+
+  try {
+    const userResult = await pool.query(
+      `SELECT * FROM ganiev.users WHERE email = $1 AND verification_token = $2`,
+      [email, token]
+    );
+
+    const user = userResult.rows[0];
+
+    if (!user) {
+      return res.status(400).send("Неверный токен или email.");
+    }
+
+    const currentTime = new Date();
+    if (user.verification_token_expires < currentTime) {
+      return res.status(400).send("Срок действия токена истек. Пожалуйста, зарегистрируйтесь заново.");
+    }
+
+    // Обновление статуса подтверждения
+    await pool.query(
+      `UPDATE ganiev.users SET 
+      is_verified = TRUE, 
+      verification_token = NULL,
+      verification_token_expires = NULL
+      WHERE email = $1`,
+      [email]
+    );
+
+    res.render("verify-email.ejs"); // Создайте этот шаблон для отображения успешного подтверждения
+  } catch (error) {
+    console.error("Ошибка подтверждения электронной почты:\n", error);
     res.sendStatus(500);
   }
 });
