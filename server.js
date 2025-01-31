@@ -97,9 +97,9 @@ app.get("/profile", async (req, res) => {
         table_id, 
         TO_CHAR(date, 'DD.MM.YYYY') AS formatted_date,
         TO_CHAR(time, 'HH24:MI') AS formatted_time
-      FROM ganiev.reserved_tables
-      JOIN ganiev.users ON ganiev.users.user_id = ganiev.reserved_tables.user_id
-      WHERE ganiev.users.user_id = $1`,
+      FROM reserved_tables
+      JOIN users ON users.user_id = reserved_tables.user_id
+      WHERE users.user_id = $1`,
       [req.session.userId]
     );
 
@@ -196,7 +196,7 @@ app.post("/reservation", async (req, res) => {
 
   try {
     const reservationCheck = await pool.query(
-      `SELECT * FROM ganiev.reserved_tables 
+      `SELECT * FROM reserved_tables 
       WHERE table_id = $1
       AND   date = $2
       AND   time = $3`,
@@ -210,7 +210,7 @@ app.post("/reservation", async (req, res) => {
     }
 
     const insertReservationQuery = `
-      INSERT INTO ganiev.reserved_tables (user_id, 
+      INSERT INTO reserved_tables (user_id, 
       table_id, 
       username,
       email, 
@@ -271,7 +271,7 @@ app.post("/login", async (req, res) => {
 
   try {
     const userResult = await pool.query(
-      `SELECT * FROM ganiev.users WHERE email = $1`,
+      `SELECT * FROM users WHERE email = $1`,
       [email]
     );
 
@@ -351,12 +351,12 @@ app.post("/register", async (req, res) => {
 
   try {
     const emailCheck = await pool.query(
-      `SELECT * FROM ganiev.users WHERE email = $1`,
+      `SELECT * FROM users WHERE email = $1`,
       [email]
     );
 
     let insertUserQuery = `
-      INSERT INTO ganiev.users (username, email, password, verification_token, verification_token_expires) 
+      INSERT INTO users (username, email, password, verification_token, verification_token_expires) 
       VALUES ($1, $2, $3, $4, $5) RETURNING user_id
     `;
     if (emailCheck.rows.length > 0) {
@@ -367,7 +367,7 @@ app.post("/register", async (req, res) => {
         return res.redirect("/register");
       } else {
         insertUserQuery = `
-          UPDATE ganiev.users SET 
+          UPDATE users SET 
           username = $1,
           password = $3,
           verification_token = $4, 
@@ -422,7 +422,7 @@ app.get("/verify-email", async (req, res) => {
 
   try {
     const userResult = await pool.query(
-      `SELECT * FROM ganiev.users WHERE email = $1 AND verification_token = $2`,
+      `SELECT * FROM users WHERE email = $1 AND verification_token = $2`,
       [email, token]
     );
 
@@ -439,7 +439,7 @@ app.get("/verify-email", async (req, res) => {
 
     // Обновление статуса подтверждения
     await pool.query(
-      `UPDATE ganiev.users SET 
+      `UPDATE users SET 
       is_verified = TRUE, 
       verification_token = NULL,
       verification_token_expires = NULL
@@ -459,7 +459,7 @@ app.post("/cancelReservation", async (req, res) => {
 
   try {
     await pool.query(
-      `DELETE FROM ganiev.reserved_tables 
+      `DELETE FROM reserved_tables 
       WHERE table_id = $1 
       AND   date = $2 
       AND   time = $3`,
