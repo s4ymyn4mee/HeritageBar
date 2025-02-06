@@ -75,8 +75,6 @@ pool
   .then(() => console.log("Connected to PostgreSQL successfully"))
   .catch((err) => console.error("Connection error", err.stack));
 
-let orders = new Map();
-
 app.get("/", (req, res) => {
   res.render("index.ejs");
 });
@@ -114,9 +112,9 @@ app.get("/profile", async (req, res) => {
       time: row.formatted_time
     }));
 
-    orders.set(req.session.email, allUserReservations);
-
-    res.render("profile.ejs", { orders: orders.get(req.session.email) });
+    res.render("profile.ejs", { 
+      orders: allUserReservations
+     });
   } catch (error) {
     console.error("Ошибка поиска столиков:\n", error);
     res.sendStatus(500);
