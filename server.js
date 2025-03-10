@@ -380,7 +380,7 @@ app.post("/register", async (req, res) => {
     const tokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 час, чтобы подтвердить
 
     const verificationLink = 
-    `http://localhost:${PORT}/verify-email?token=${verificationToken}&email=${email}`;
+    `https://heritagebar-production.up.railway.app/verify-email?token=${verificationToken}&email=${email}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
