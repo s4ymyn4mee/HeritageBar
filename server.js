@@ -363,7 +363,8 @@ app.post("/register", async (req, res) => {
         req.session.emailErrorMessage = "Этот email уже зарегистрирован, авторизуйтесь.";
  
         return res.redirect("/register");
-      } else {
+      }
+      if (!existingUser.is_verified) {
         insertUserQuery = `
           UPDATE users SET 
           username = $1,
@@ -392,7 +393,12 @@ app.post("/register", async (req, res) => {
         <p>Если вы не регистрировались, проигнорируйте это письмо.</p>
       `
     };
-    await transporter.sendMail(mailOptions);
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (error) {
+      req.session.emailErrorMessage = "Не удалось отправить письмо на этот Email.";
+      res.redirect("/register");
+    }
 
     await pool.query(insertUserQuery, [
       username,
@@ -435,7 +441,6 @@ app.get("/verify-email", async (req, res) => {
       return res.status(400).send("Срок действия токена истек. Пожалуйста, зарегистрируйтесь заново.");
     }
 
-    // Обновление статуса подтверждения
     await pool.query(
       `UPDATE users SET 
       is_verified = TRUE, 
@@ -445,7 +450,7 @@ app.get("/verify-email", async (req, res) => {
       [email]
     );
 
-    res.render("verify-email.ejs"); // Создайте этот шаблон для отображения успешного подтверждения
+    res.render("verify-email.ejs");
   } catch (error) {
     console.error("Ошибка подтверждения электронной почты:\n", error);
     res.sendStatus(500);
