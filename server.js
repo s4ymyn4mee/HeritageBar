@@ -275,7 +275,7 @@ app.post("/login", async (req, res) => {
 
     const user = userResult.rows[0];
     if (!user) {
-      req.session.emailErrorMessage = "Несуществующий email";
+      req.session.emailErrorMessage = "Незарегистрированный Email.";
 
       return res.redirect("/login");
     }
@@ -397,7 +397,7 @@ app.post("/register", async (req, res) => {
       await transporter.sendMail(mailOptions);
     } catch (error) {
       req.session.emailErrorMessage = "Не удалось отправить письмо на этот Email.";
-      res.redirect("/register");
+      return res.redirect("/register");
     }
 
     await pool.query(insertUserQuery, [
@@ -460,13 +460,15 @@ app.get("/verify-email", async (req, res) => {
 app.post("/cancelReservation", async (req, res) => {
   const { tableNumber, date, time } = req.body;
 
+  const [day, month, year] = date.split('.');
+  const formattedDate = `${year}-${month}-${day}`;
   try {
     await pool.query(
       `DELETE FROM reserved_tables 
       WHERE table_id = $1 
       AND   date = $2 
       AND   time = $3`,
-      [tableNumber, date, time]
+      [tableNumber, formattedDate, time]
     );
 
     res.redirect("/profile");
