@@ -255,9 +255,14 @@ app.post("/reservation", async (req, res) => {
         const suggestionBefore = new Date(reservedDateTime.getTime() - 60 * 60 * 1000);
         const suggestionAfter = new Date(reservedDateTime.getTime() + 60 * 60 * 1000);
 
-        req.session.reservationErrorMessage =
-          `В пределах одного часа этот столик уже забронирован. Попробуйте записаться до ${formatTime(suggestionBefore)} 
-          или после ${formatTime(suggestionAfter)}.`;
+        if (suggestionBefore < new Date()) {
+          req.session.reservationErrorMessage =
+          `В пределах одного часа этот столик уже забронирован. Попробуйте записаться после ${formatTime(suggestionAfter)}.`;
+        } else {
+          req.session.reservationErrorMessage =
+            `В пределах одного часа этот столик уже забронирован. Попробуйте записаться до ${formatTime(suggestionBefore)} 
+            или после ${formatTime(suggestionAfter)}.`;
+        }
 
           return req.session.save(err => {
             if (err) {
