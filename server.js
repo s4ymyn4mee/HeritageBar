@@ -126,6 +126,9 @@ app.get("/menu", (req, res) => {
 });
 
 app.get("/reservation", (req, res) => {
+  const reservationErrorMessage = req.session.reservationErrorMessage || "";
+  req.session.reservationErrorMessage = "";
+
   const options = {
     timeZone: 'Asia/Yekaterinburg',
     year: 'numeric',
@@ -134,10 +137,7 @@ app.get("/reservation", (req, res) => {
   };
 
   // Формат YYYY-MM-DD
-  const formattedDate = new Intl.DateTimeFormat('en-CA', options).format(new Date()); 
-  const reservationErrorMessage = req.session.reservationErrorMessage || "";
-
-  req.session.reservationErrorMessage = "";
+  const formattedDate = new Intl.DateTimeFormat('en-CA', options).format(new Date());
 
   if (req.session.username) {
     res.render("reservation.ejs", { 
@@ -147,7 +147,9 @@ app.get("/reservation", (req, res) => {
       tableAmount: TABLE_AMOUNT
      });
   }
-  else { res.redirect("/login"); }
+  else { 
+    return res.redirect("/login"); 
+  }
 });
 
 app.post("/reservation", async (req, res) => {
@@ -155,26 +157,48 @@ app.post("/reservation", async (req, res) => {
 
   if (peopleCount <= 0 || peopleCount > PEOPLE_AMOUNT) {
     req.session.reservationErrorMessage = "Некорректное число человек";
-    return res.redirect("/reservation");
+
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/reservation");
+    });
   }
 
   if (tableNumber <= 0 || tableNumber > TABLE_AMOUNT) {
     req.session.reservationErrorMessage = "Некорректный номер столика";
-    return res.redirect("/reservation");
+
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/reservation");
+    });
   }
 
   const datePattern = /^20\d{2}-\d{2}-\d{2}$/; // YYYY-MM-DD
   if (!datePattern.test(date)) {
     req.session.reservationErrorMessage = "Некорректный формат даты бронирования";
 
-    return res.redirect("/reservation");
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/reservation");
+    });
   }
 
   const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/; // HH:MM (00:00 - 23:59)
   if (!timePattern.test(time)) {
     req.session.reservationErrorMessage = "Некорректный формат времени бронирования";
 
-    return res.redirect("/reservation");
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/reservation");
+    });
   }
 
   const bookingDateTime = new Date(`${date}T${time}:00`);
@@ -182,40 +206,70 @@ app.post("/reservation", async (req, res) => {
   if (bookingDateTime <= now) {
     req.session.reservationErrorMessage = "Дата и время бронирования уже прошли";
 
-    return res.redirect("/reservation");
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/reservation");
+    });
   }
 
   const reservationHour = bookingDateTime.getHours();
   if (!(reservationHour >= 18 && reservationHour <= 23 || reservationHour >= 0 && reservationHour < 6)) {
     req.session.reservationErrorMessage = "Бронирование возможно только с 18:00 до 05:59";
 
-    return res.redirect("/reservation");
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/reservation");
+    });
   }
 
   try {
+    const dateObj = new Date(date);
+  
+    const prevDateObj = new Date(dateObj);
+    prevDateObj.setDate(dateObj.getDate() - 1);
+    const nextDateObj = new Date(dateObj);
+    nextDateObj.setDate(dateObj.getDate() + 1);
+  
+    const prevDateStr = prevDateObj.toISOString().slice(0, 10);
+    const nextDateStr = nextDateObj.toISOString().slice(0, 10);
+
     const reservationCheck = await pool.query(
-      `SELECT * FROM reserved_tables 
-      WHERE table_id = $1
-      AND   date = $2
-      AND   time = $3`,
-      [tableNumber, date, time]
+      `SELECT date, time FROM reserved_tables 
+       WHERE table_id = $1 AND date IN ($2, $3, $4)`,
+      [tableNumber, prevDateStr, date, nextDateStr]
     );
 
-    if (reservationCheck.rows.length > 0) {
-      req.session.reservationErrorMessage = "Столик уже занят";
+    const formatTime = dt => dt.toTimeString().slice(0, 5);
 
-      return res.redirect("/reservation");
+    for (const row of reservationCheck.rows) {
+      const reservedDate = new Date(row.date);
+      const reservedDateStr = `${reservedDate.getFullYear()}-${String(reservedDate.getMonth() + 1).padStart(2, '0')}-${String(reservedDate.getDate()).padStart(2, '0')}`;
+      const reservedDateTime = new Date(`${reservedDateStr}T${row.time}`);
+      const diff = Math.abs(bookingDateTime - reservedDateTime);
+
+      if (diff < 60 * 60 * 1000) {
+        const suggestionBefore = new Date(reservedDateTime.getTime() - 60 * 60 * 1000);
+        const suggestionAfter = new Date(reservedDateTime.getTime() + 60 * 60 * 1000);
+
+        req.session.reservationErrorMessage =
+          `В пределах одного часа этот столик уже забронирован. Попробуйте записаться до ${formatTime(suggestionBefore)} 
+          или после ${formatTime(suggestionAfter)}.`;
+
+          return req.session.save(err => {
+            if (err) {
+              console.error(err);
+            }
+            return res.redirect("/reservation");
+          });
+      }
     }
 
     const insertReservationQuery = `
-      INSERT INTO reserved_tables (user_id, 
-      table_id, 
-      username,
-      email, 
-      date,
-      time,
-      people_count
-      ) 
+      INSERT INTO reserved_tables (user_id, table_id, username, email, date, time, people_count) 
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING user_id
     `;
     await pool.query(insertReservationQuery, [
@@ -229,7 +283,6 @@ app.post("/reservation", async (req, res) => {
     ]);
 
     req.session.reservationErrorMessage = "";
-
     return res.redirect("/profile");
   } catch (error) {
     console.error("Ошибка бронирования столика:\n", error);
@@ -257,14 +310,24 @@ app.post("/login", async (req, res) => {
   if (!emailPattern.test(email)) {
     req.session.emailErrorMessage = "Некорректный email";
 
-    return res.redirect("/login");
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/login");
+    });
   }
 
   const passwordPattern = /^[^\s]{8,50}$/;
   if (!passwordPattern.test(password)) {
     req.session.passwordErrorMessage = "Неверный пароль";
 
-    return res.redirect("/login");
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/login");
+    });
   }
 
   try {
@@ -277,13 +340,23 @@ app.post("/login", async (req, res) => {
     if (!user) {
       req.session.emailErrorMessage = "Незарегистрированный Email.";
 
-      return res.redirect("/login");
+      return req.session.save(err => {
+        if (err) {
+          console.error(err);
+        }
+        return res.redirect("/login");
+      });
     }
 
     if (!user.is_verified) {
       req.session.emailErrorMessage = "Пожалуйста, подтвердите свою электронную почту перед входом";
 
-      return res.redirect("/login");
+      return req.session.save(err => {
+        if (err) {
+          console.error(err);
+        }
+        return res.redirect("/login");
+      });
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
@@ -292,11 +365,21 @@ app.post("/login", async (req, res) => {
       req.session.username = user.username;
       req.session.email = user.email;
 
-      return res.redirect("/profile");
+      return req.session.save(err => {
+        if (err) {
+          console.error(err);
+        }
+        return res.redirect("/profile");
+      });
     } else {
       req.session.passwordErrorMessage = "Неверный пароль";
 
-      return res.redirect("/login");
+      return req.session.save(err => {
+        if (err) {
+          console.error(err);
+        }
+        return res.redirect("/login");
+      });
     }
   } catch (error) {
     console.error("Ошибка авторизации:\n", error);
@@ -330,21 +413,36 @@ app.post("/register", async (req, res) => {
   if (!usernamePattern.test(username)) {
     req.session.usernameErrorMessage = "Допускается только латиница, кириллица и пробел";
 
-    return res.redirect("/register");
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/register");
+    });
   }
 
   const emailPattern = /^[a-zA-Z0-9._%+-]{1,50}@[a-zA-Z0-9.-]{1,50}.[a-zA-Z]{2,}$/;
   if (!emailPattern.test(email)) {
     req.session.emailErrorMessage = "Некорректный email";
 
-    return res.redirect("/register");
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/register");
+    });
   }
 
   const passwordPattern = /^[^\s]{8,50}$/;
   if (!passwordPattern.test(password)) {
     req.session.passwordErrorMessage = "Пароль должен иметь длину от 8 до 50 символов";
 
-    return res.redirect("/register");
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/register");
+    });
   }
 
   try {
@@ -362,7 +460,12 @@ app.post("/register", async (req, res) => {
       if (existingUser.is_verified) {
         req.session.emailErrorMessage = "Этот email уже зарегистрирован, авторизуйтесь.";
  
-        return res.redirect("/register");
+        return req.session.save(err => {
+          if (err) {
+            console.error(err);
+          }
+          return res.redirect("/register");
+        });
       }
       if (!existingUser.is_verified) {
         insertUserQuery = `
@@ -397,7 +500,13 @@ app.post("/register", async (req, res) => {
       await transporter.sendMail(mailOptions);
     } catch (error) {
       req.session.emailErrorMessage = "Не удалось отправить письмо на этот Email.";
-      return res.redirect("/register");
+      
+      return req.session.save(err => {
+        if (err) {
+          console.error(err);
+        }
+        return res.redirect("/register");
+      });
     }
 
     await pool.query(insertUserQuery, [
@@ -410,7 +519,13 @@ app.post("/register", async (req, res) => {
 
     req.session.emailErrorMessage = "";
     req.session.bEmailConfirmMessage = true;
-    res.redirect("/register");
+
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/register");
+    });
   } catch (error) {
     console.error("Ошибка регистрации:\n", error);
     res.sendStatus(500);
