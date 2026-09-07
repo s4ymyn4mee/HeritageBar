@@ -7,6 +7,7 @@ const dbConfig = {
   port:     process.env.DB_PORT,
 }
 const PORT = process.env.PORT || 3000;  
+const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
 
 const express = require("express");
 const { Pool } = require("pg");
@@ -489,7 +490,7 @@ app.post("/register", async (req, res) => {
     const tokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 час, чтобы подтвердить
 
     const verificationLink = 
-    `https://heritagebar-production.up.railway.app/verify-email?token=${verificationToken}&email=${email}`;
+    `${baseUrl}/verify-email?token=${verificationToken}&email=${email}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
