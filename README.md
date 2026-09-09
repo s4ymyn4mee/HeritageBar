@@ -24,7 +24,7 @@ DB_HOST=<db_host>
 DATABASE=<database_name>
 DB_PASS=<db_password>
 DB_PORT=<db_port>
-BASE_URL=<base_url (example: localhost:3000 but without the port for hostings)>
+BASE_URL=<base_url (example: http://localhost:3000 but without the port for hostings)>
 ```
 4. Запустить проект одной из следующих команд:
 ```
