@@ -1,5 +1,5 @@
 ![Heritage Bar](/public/img/logo_negate.png)
-# Сайт бара "Наследие"
+# Учебный сайт вымышленного бара "Наследие"
 ## Ссылка на сайт:
 https://heritagebar-production.up.railway.app/
 ## Для входа можно использовать тестового пользователя:
