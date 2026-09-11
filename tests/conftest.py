@@ -107,12 +107,12 @@ def unverified_user(db_connection):
             (f"TestUnverifiedUser", test_email, hashed_password)
         )
 
-    user_credentials = {
+    unverified_user_data = {
         "email": test_email,
         "password": test_password
     }
 
-    yield user_credentials
+    yield unverified_user_data
 
     # teardown
     with db_connection.cursor() as cursor:
