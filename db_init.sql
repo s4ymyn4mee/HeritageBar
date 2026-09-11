@@ -66,3 +66,9 @@ DROP INDEX IF EXISTS "IDX_session_expire";
 CREATE INDEX IF NOT EXISTS "IDX_session_expire"
     ON session USING btree (expire ASC NULLS LAST)
     TABLESPACE pg_default;
+
+INSERT INTO users (username, email, password, is_verified)
+VALUES 
+  ('testuser', 'test@example.com', '$2b$10$VDGHZr0kI6u87Ijmq94i5O4O4/K7wraBd8YvJqPjfqp1QWXWQrJUm', true),
+  ('testuser', 'laffpie@mail.ru', '$2b$10$6DmaLAISgQk/Qn7xPH6Kkus7R1LopLKv87IcUsfI660TnkkOT6xGm', true)
+ON CONFLICT (email) DO NOTHING;

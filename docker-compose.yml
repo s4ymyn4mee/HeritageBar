@@ -1,0 +1,41 @@
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: heritagebar_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret_heritage
+      POSTGRES_DB: heritagebar
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db_init.sql:/docker-entrypoint-initdb.d/db_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d heritagebar"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+  app:
+    build: .
+    container_name: heritagebar_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    command: npx nodemon server.js
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
