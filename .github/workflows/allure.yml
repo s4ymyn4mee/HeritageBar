@@ -1,0 +1,79 @@
+name: Tests & Allure Report
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create .env from template
+        run: cp .env.example .env
+
+      - name: Start containers with Docker Compose
+        run: docker compose up -d --build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Wait for Backend to be ready
+        run: |
+          set -a
+          [ -f .env ] && . .env
+          set +a
+          TARGET_URL="${BASE_URL:-http://localhost:${PORT:-3000}}"
+          echo "Checking service availability at ${TARGET_URL}/login..."
+          timeout 60 bash -c "until curl -s ${TARGET_URL}/login > /dev/null; do sleep 1; done"
+
+      - name: Run Pytest with Allure
+        run: |
+          set -a
+          [ -f .env ] && . .env
+          set +a
+          pytest -v --alluredir=allure-results --clean-alluredir || true
+
+      - name: Install Allure CLI
+        run: |
+          sudo npm install -g allure-commandline --unsafe-perm=true
+
+      - name: Generate Allure Report
+        run: |
+          allure generate allure-results --clean -o allure-report
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: 'allure-report'
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
