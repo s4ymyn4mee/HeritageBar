@@ -1,0 +1,17 @@
+{
+  "watch": ["."],
+  "ext": "js,mjs,cjs,json",
+  "ignore": [
+    "allure-results/*",
+    "allure-report/*",
+    ".pytest_cache/*",
+    "tests/*",
+    ".venv/*",
+    "venv/*",
+    ".git/*",
+    "node_modules/*",
+    ".vscode/*",
+    ".idea/*",
+    "package-lock.json"
+  ]
+}

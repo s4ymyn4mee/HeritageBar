@@ -3,3 +3,5 @@ node_modules/
 .venv/
 .pytest_cache/
 __pycache__/
+allure-results/
+allure-report/

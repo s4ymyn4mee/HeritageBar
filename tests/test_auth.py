@@ -2,11 +2,14 @@ import os
 import time
 import pytest
 import requests
+import allure
+
 TEST_USER_EMAIL = os.getenv("TEST_USER_EMAIL")
 TEST_USER_PASSWORD = os.getenv("TEST_USER_PASSWORD")
 
 
 class TestLoginPositive:
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_unauthorized_user_cannot_access_profile(self, client, base_url):
         """
         Проверка, что неавторизованный пользователь не имеет доступа к профилю
@@ -20,6 +23,7 @@ class TestLoginPositive:
         assert response.status_code == 302
         assert response.headers.get("Location") == '/login'
 
+    @allure.severity(allure.severity_level.BLOCKER)
     def test_successful_login_and_session_storaging(self, client, base_url, login_test_data):
         """
         Проверка успешного сценария логина и сохранения sid в куках
@@ -44,6 +48,7 @@ class TestLoginPositive:
 
         assert profile_response.status_code == 200, "Сервер попытался нас перенаправить (кука не сработала)"
 
+    @allure.severity(allure.severity_level.MINOR)
     @pytest.mark.parametrize(
         "payload",
         [
@@ -81,6 +86,7 @@ class TestLoginPositive:
 
 
 class TestLoginNegative:
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_unverified_user_cannot_login(self, client, base_url, unverified_user):
         """
         Проверка того, что пользователь с is_verified = false не должен получать
@@ -106,6 +112,7 @@ class TestLoginNegative:
         assert profile_response.status_code == 302
         assert profile_response.headers.get("Location") == "/login"
 
+    @allure.severity(allure.severity_level.NORMAL)
     @pytest.mark.parametrize(
         "payload",
         [
@@ -176,6 +183,7 @@ class TestLoginNegative:
         assert profile_response.headers.get("Location") == "/login"
 
 class TestAppSecurity:
+    @allure.severity(allure.severity_level.BLOCKER)
     @pytest.mark.parametrize(
         "payload",
         [
@@ -300,6 +308,7 @@ class TestAppSecurity:
 
 
 class TestSessionLifecycle:
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_anonymous_session_destroys_on_successful_login(self, client, base_url, login_test_data):
         """
         Проверка защиты от атаки Fixation Session:
@@ -335,6 +344,7 @@ class TestSessionLifecycle:
         assert profile_response.headers.get("Location") == "/login"
         attacker_client.close()
 
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_logout_destroys_session_on_server(self, client, base_url, authenticated_client):
         """
         Проверка того, что сессия удаляется на сервере (клиент может сохранить, 
@@ -358,6 +368,7 @@ class TestSessionLifecycle:
         assert response.status_code == 302
         assert response.headers.get("Location") == "/login"
 
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_session_cookie_security_attrs(self, client, base_url, login_test_data):
         """
         Проверка HttpOnly (от XSS-атак), SameSite (от CSRF-атак), 
@@ -387,6 +398,7 @@ class TestSessionLifecycle:
         if base_url.startswith("https://"):
             assert cookie.secure, "Уязвимость: по HTTPS нет флага Secure"
 
+    @allure.severity(allure.severity_level.NORMAL)
     @pytest.mark.parametrize(
         "corrupted_sid",
         [
@@ -420,6 +432,7 @@ class TestSessionLifecycle:
         assert response.status_code == 302
         assert response.headers.get("Location") == "/login"
 
+    @allure.severity(allure.severity_level.NORMAL)
     def test_session_cookie_has_valid_ttl(self, client, base_url, login_test_data):
         """
         Проверка, что сервер выставляет TTL (Expires или max-age),
@@ -447,6 +460,7 @@ class TestSessionLifecycle:
         assert abs(ttl_seconds - expected_ttl) < network_tolerance, (
             f"Неожиданный TTL сессии: {ttl_seconds} сек")
 
+    @allure.severity(allure.severity_level.CRITICAL)
     def test_expired_session_denies_access(self, client, authenticated_client, base_url, db_connection):
         """
         Проверка, что при отправке устаревшей сессии сервер отказывает в авторизации
