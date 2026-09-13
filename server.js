@@ -310,10 +310,24 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.body || {};
+
+  // Валидация типов входящих параметров
+  if (typeof email !== "string" || typeof password !== "string") {
+    req.session.emailErrorMessage = "Некорректные данные для входа";
+    return req.session.save(err => {
+      if (err) {
+        console.error(err);
+      }
+      return res.redirect("/login");
+    });
+  }
+
+  // Санитизация
+  const cleanEmail = email.trim().toLowerCase();
 
   const emailPattern = /^[a-zA-Z0-9._%+-]{1,50}@[a-zA-Z0-9.-]{1,50}.[a-zA-Z]{2,}$/;
-  if (!emailPattern.test(email)) {
+  if (!emailPattern.test(cleanEmail)) {
     req.session.emailErrorMessage = "Некорректный email";
 
     return req.session.save(err => {
@@ -339,7 +353,7 @@ app.post("/login", async (req, res) => {
   try {
     const userResult = await pool.query(
       `SELECT * FROM users WHERE email = $1`,
-      [email]
+      [cleanEmail]
     );
 
     const user = userResult.rows[0];
@@ -370,12 +384,25 @@ app.post("/login", async (req, res) => {
       req.session.userId = user.user_id;
       req.session.username = user.username;
       req.session.email = user.email;
-
-      return req.session.save(err => {
+      
+      // Регенерируем новый SID для защиты от фиксации сессии
+      return req.session.regenerate(err => {
         if (err) {
-          console.error(err);
+          console.error("Ошибка регенерации сессии:", err);
+          return res.sendStatus(500);
         }
-        return res.redirect("/profile");
+
+        req.session.userId = user.user_id;
+        req.session.username = user.username;
+        req.session.email = user.email;
+
+        return req.session.save(saveErr => {
+          if (saveErr) {
+            console.error("Ошибка сохранения сессии:", saveErr);
+            return res.sendStatus(500);
+          }
+          return res.redirect("/profile");
+        });
       });
     } else {
       req.session.passwordErrorMessage = "Неверный пароль";
