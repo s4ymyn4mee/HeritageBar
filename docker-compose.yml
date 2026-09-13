@@ -5,16 +5,16 @@ services:
     container_name: heritagebar_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret_heritage
-      POSTGRES_DB: heritagebar
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DATABASE:-heritagebar}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db_init.sql:/docker-entrypoint-initdb.d/db_init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d heritagebar"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,7 +24,7 @@ services:
     container_name: heritagebar_app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:${PORT:-3000}"
     env_file:
       - .env
     environment:
