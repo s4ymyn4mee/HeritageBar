@@ -1,71 +1,51 @@
--- Table: users
 
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS users CASCADE;
 
 CREATE TABLE IF NOT EXISTS users
 (
     user_id SERIAL PRIMARY KEY,
-    username character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    email character varying(50) COLLATE pg_catalog."default" NOT NULL UNIQUE,
-    password character varying(100) COLLATE pg_catalog."default" NOT NULL,
-    profile_create_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    is_verified boolean DEFAULT false,
-    verification_token character varying(255) COLLATE pg_catalog."default",
-    verification_token_expires timestamp without time zone
-)
-TABLESPACE pg_default;
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
+    profile_create_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    is_verified BOOLEAN DEFAULT false,
+    verification_token VARCHAR(255),
+    verification_token_expires TIMESTAMP WITHOUT TIME ZONE
+);
 
-ALTER TABLE IF EXISTS users
-    OWNER to postgres;
-
--- Table: reserved_tables
-
-DROP TABLE IF EXISTS reserved_tables;
+DROP TABLE IF EXISTS reserved_tables CASCADE;
 
 CREATE TABLE IF NOT EXISTS reserved_tables
 (
     reservation_id BIGSERIAL PRIMARY KEY,
-    user_id integer NOT NULL,
-    table_id smallint NOT NULL,
-    username character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    email character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    date date NOT NULL,
-    "time" time(5) without time zone NOT NULL,
-    people_count smallint NOT NULL,
-    reservation_time timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    user_id INTEGER NOT NULL,
+    table_id SMALLINT NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(50) NOT NULL,
+    date DATE NOT NULL,
+    "time" TIME(5) WITHOUT TIME ZONE NOT NULL,
+    people_count SMALLINT NOT NULL,
+    reservation_time TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user_id FOREIGN KEY (user_id)
         REFERENCES users (user_id)
         ON UPDATE NO ACTION
-        ON DELETE NO ACTION
-)
-TABLESPACE pg_default;
+        ON DELETE CASCADE
+);
 
-ALTER TABLE IF EXISTS reserved_tables
-    OWNER to postgres;
-
--- Table: session
-
-DROP TABLE IF EXISTS session;
+DROP TABLE IF EXISTS session CASCADE;
 
 CREATE TABLE IF NOT EXISTS session
 (
-    sid character varying COLLATE pg_catalog."default" NOT NULL,
-    sess json NOT NULL,
-    expire timestamp(6) without time zone NOT NULL,
+    sid VARCHAR NOT NULL,
+    sess JSON NOT NULL,
+    expire TIMESTAMP(6) WITHOUT TIME ZONE NOT NULL,
     CONSTRAINT session_pkey PRIMARY KEY (sid)
-)
-TABLESPACE pg_default;
-
-ALTER TABLE IF EXISTS session
-    OWNER to postgres;
-
--- Index: IDX_session_expire
+);
 
 DROP INDEX IF EXISTS "IDX_session_expire";
 
 CREATE INDEX IF NOT EXISTS "IDX_session_expire"
-    ON session USING btree (expire ASC NULLS LAST)
-    TABLESPACE pg_default;
+    ON session USING btree (expire ASC NULLS LAST);
 
 INSERT INTO users (username, email, password, is_verified)
 VALUES 
